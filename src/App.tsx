@@ -45,7 +45,7 @@ function App() {
         setUser({
           id: tgUser.id,
           username: tgUser.username || '',
-          plan: 'premium', // Default plan (can be dynamic)
+          plan: 'basic', // Default plan (can be dynamic)
           isAdmin: ADMIN_IDS.includes(tgUser.id),
           isAllowed: true,
           telegramWallet: ''
