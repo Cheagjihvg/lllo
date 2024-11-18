@@ -31,8 +31,8 @@ function App() {
   const [user, setUser] = useState<User>({
     id: 0,
     username: '',
-    plan: 'premium',
-    isAdmin: true, // Default to false until we fetch the user data
+    plan: 'basic',
+    isAdmin: false, // Default to false until we fetch the user data
     isAllowed: true,
     telegramWallet: ''
   });
