@@ -5,8 +5,8 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
+    /* Node-specific settings */
+    "moduleResolution": "Node",  // Use Node module resolution for backend code
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -18,5 +18,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "api/**/*"]  // Include your backend functions or API routes
 }
