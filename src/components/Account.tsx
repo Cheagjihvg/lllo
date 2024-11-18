@@ -10,27 +10,29 @@ interface AccountProps {
 
 export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
   const { isDark } = useTheme();
-  const [history] = useState<WalletResult[]>([]);
+  const [history] = useState<WalletResult[]>([]); // Assuming history is fetched somewhere else
   const [redeemKey, setRedeemKey] = useState('');
   const [redeemStatus, setRedeemStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false); // For loading state
 
   useEffect(() => {
     // Initialize user data from Telegram WebApp if available
     if (window.Telegram?.WebApp) {
       const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
-      if (initDataUnsafe && initDataUnsafe.user) {
+      if (initDataUnsafe?.user) {
         const telegramUser = initDataUnsafe.user;
-        setUser({
-          ...user,
+        setUser((prevUser) => ({
+          ...prevUser,
           id: telegramUser.id || 'Unknown',
           username: telegramUser.username || 'Anonymous',
-        });
+        }));
       }
     }
-  }, [setUser, user]);
+  }, [setUser]);
 
   const connectWallet = async () => {
     if (window.Telegram?.WebApp) {
+      setLoading(true); // Set loading state while connecting wallet
       try {
         // Using Telegram WebApp API to connect the wallet
         const wallet = await window.Telegram.WebApp.connectWallet();
@@ -44,16 +46,24 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
             buttons: [{ type: 'ok' }],
           });
         }
+      } finally {
+        setLoading(false); // Reset loading state after the process completes
       }
     }
   };
 
   const handleRedeemKey = async () => {
+    if (!redeemKey.trim()) {
+      setRedeemStatus('Please enter a valid redeem key.');
+      return;
+    }
+
+    setLoading(true); // Set loading state while redeeming
     try {
       const response = await fetch('/api/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ redeemKey, userId: user.id }),
+        body: JSON.stringify({ redeemKey: redeemKey.trim(), userId: user.id }),
       });
 
       const data = await response.json();
@@ -67,6 +77,8 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
     } catch (error) {
       console.error('Error redeeming key:', error);
       setRedeemStatus('Error redeeming the key. Please try again later.');
+    } finally {
+      setLoading(false); // Reset loading state after the process completes
     }
 
     setRedeemKey(''); // Clear redeem key input
@@ -114,10 +126,11 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
               {!user.telegramWallet && (
                 <button
                   onClick={connectWallet}
+                  disabled={loading}
                   className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center"
                 >
                   <Wallet size={18} className="mr-2" />
-                  Connect
+                  {loading ? 'Connecting...' : 'Connect'}
                 </button>
               )}
             </div>
@@ -136,10 +149,11 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
               />
               <button
                 onClick={handleRedeemKey}
+                disabled={loading}
                 className="ml-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300"
               >
                 <Key size={18} className="mr-2" />
-                Redeem
+                {loading ? 'Redeeming...' : 'Redeem'}
               </button>
             </div>
 
