@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { PLAN_FEATURES } from './config/plans';
 import type { User, Plan } from './types';
 
-const ADMIN_IDS = [123456789, 987654321]; // Replace with real admin IDs
+const ADMIN_IDS = [1439771387, 987654321]; // Replace with real admin IDs
 
 // Admin panel action handler
 const onManageUser = (action: string, userId: number) => {
