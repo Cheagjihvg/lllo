@@ -161,7 +161,7 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
                 type="text"
                 value={redeemKey}
                 onChange={(e) => setRedeemKey(e.target.value)}
-                className="px-4 py-2 rounded-lg bg-gray-200/80 border border-gray-300 text-sm flex-1"
+                className="px-4 py-2 rounded-lg bg-gray-200/80 border border-gray-300 text-sm flex-grow"
                 placeholder="Enter your redeem key"
               />
               <button
