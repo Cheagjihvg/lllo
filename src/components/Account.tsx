@@ -89,7 +89,8 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
         setUser({ ...user, plan: 'pro', coins: (user.coins || 0) + coins }); // Update user plan and coins
         setRedeemStatus(`Successfully redeemed! You received ${coins} coins.`);
       } else {
-        setRedeemStatus(data.message || 'Failed to redeem key');
+        // API error - show the message returned by the API
+        setRedeemStatus(data.message || 'Failed to redeem key. Please check the key or try again later.');
       }
     } catch (error) {
       console.error('Error redeeming key:', error);
