@@ -13,6 +13,7 @@ interface PlansProps {
 export const Plans: React.FC<PlansProps> = ({ currentPlan, telegramWallet, tgwebdata }) => {
   const { isDark } = useTheme();
   const [isExpired, setIsExpired] = useState(false);
+  const [userCoins, setUserCoins] = useState(tgwebdata?.coins || 0); // Assume tgwebdata has coins info
 
   useEffect(() => {
     if (tgwebdata?.planExpiry) {
@@ -36,7 +37,7 @@ export const Plans: React.FC<PlansProps> = ({ currentPlan, telegramWallet, tgweb
       return;
     }
 
-    // If the user's plan is expired, show the payment prompt
+    // If the user's plan is expired, show the renewal prompt
     if (isExpired) {
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.showPopup({
@@ -46,38 +47,67 @@ export const Plans: React.FC<PlansProps> = ({ currentPlan, telegramWallet, tgweb
         });
       }
     } else {
-      // Proceed to payment (if not expired)
-      processPayment(plan);
-    }
-  };
-
-  const processPayment = (plan: Plan) => {
-    const paymentAmount = parseFloat(plan.price.replace('$', '').replace(',', '')); // Assuming price is in USD
-    const usdtAmount = paymentAmount; // Assuming USDT is equal to USD in this context
-
-    if (window.Telegram?.WebApp) {
-      try {
-        window.Telegram.WebApp.sendData(
-          JSON.stringify({
-            type: 'payment',
-            amount: usdtAmount,
-            currency: 'USDT',
-            userId: tgwebdata.userId, // Assuming tgwebdata contains user ID
-            planName: plan.name,
-            telegramWallet,
-          })
-        );
-      } catch (error) {
-        console.error('Error sending payment data to Telegram WebApp:', error);
+      // Proceed to upgrade using coins
+      if (userCoins < plan.coinCost) {
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.showPopup({
-            title: 'Payment Error',
-            message: 'There was an error processing your payment. Please try again later.',
+            title: 'Insufficient Coins',
+            message: `You need ${plan.coinCost} coins to upgrade to the ${plan.name} plan.`,
             buttons: [{ type: 'ok' }],
           });
         }
+        return;
       }
+
+      processUpgrade(plan);
     }
+  };
+
+  const processUpgrade = (plan: Plan) => {
+    // Deduct coins and update plan
+    setUserCoins(userCoins - plan.coinCost); // Deduct coins from the user's balance
+
+    // Call API to update the plan on the server
+    fetch('/api/buyPlan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: tgwebdata.userId,
+        plan: plan.name,
+        cost: plan.coinCost,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Assuming the response confirms the plan update
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.showPopup({
+              title: 'Plan Upgraded',
+              message: `You have successfully upgraded to the ${plan.name} plan!`,
+              buttons: [{ type: 'ok' }],
+            });
+          }
+        } else {
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.showPopup({
+              title: 'Upgrade Error',
+              message: 'There was an error upgrading your plan. Please try again later.',
+              buttons: [{ type: 'ok' }],
+            });
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error upgrading plan:', error);
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.showPopup({
+            title: 'Upgrade Error',
+            message: 'Error upgrading your plan. Please try again later.',
+            buttons: [{ type: 'ok' }],
+          });
+        }
+      });
   };
 
   return (
@@ -85,6 +115,13 @@ export const Plans: React.FC<PlansProps> = ({ currentPlan, telegramWallet, tgweb
       <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
         Choose Your Plan
       </h2>
+
+      {/* Display the user's coin balance */}
+      <div className="text-center mb-6">
+        <p className="text-xl font-semibold">
+          You have {userCoins} coins available.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLAN_FEATURES.map((plan) => (
@@ -131,14 +168,18 @@ export const Plans: React.FC<PlansProps> = ({ currentPlan, telegramWallet, tgweb
 
             <button
               onClick={() => handleUpgrade(plan)}
-              disabled={currentPlan === plan.name || isExpired}
+              disabled={currentPlan === plan.name || isExpired || userCoins < plan.coinCost}
               className={`w-full py-2 px-4 rounded-lg transition-all duration-300 ${
-                currentPlan === plan.name || isExpired
+                currentPlan === plan.name || isExpired || userCoins < plan.coinCost
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-500 hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
               } text-white font-semibold`}
             >
-              {isExpired ? 'Renew Now' : currentPlan === plan.name ? 'Current Plan' : 'Upgrade Now'}
+              {isExpired
+                ? 'Renew Now'
+                : currentPlan === plan.name
+                ? 'Current Plan'
+                : `Upgrade for ${plan.coinCost} Coins`}
             </button>
           </div>
         ))}
