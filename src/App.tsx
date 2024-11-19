@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, Wallet, Key } from 'lucide-react';  // Use Wallet icon
 import { WebApp } from '@twa-dev/sdk';
-import { Navigation } from './components/Navigation';
-import { Scanner } from './components/Scanner';
-import { About } from './components/About';
-import { Account } from './components/Account';
-import { Plans } from './components/Plans';
-import { AdminPanel } from './components/AdminPanel';
+import { Navigation } from './pages/Navigation';
+import { Scanner } from './pages/Scanner';
+import { About } from './pages/About';
+import { Account } from './pages/Account';
+import { Plans } from './pages/Plans';
+import { AdminPanel } from './pages/AdminPanel';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { PLAN_FEATURES } from './config/plans';
 import type { User, Plan } from './types';
