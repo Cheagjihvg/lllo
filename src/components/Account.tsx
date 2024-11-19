@@ -84,8 +84,10 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
 
       const data = await response.json();
       if (response.ok) {
-        setUser({ ...user, plan: 'pro' });
-        setRedeemStatus(data.message);
+        // Assuming the redeem API returns the amount of coins redeemed
+        const { coins } = data;  // The response should include the coins awarded
+        setUser({ ...user, plan: 'pro', coins: (user.coins || 0) + coins }); // Update user plan and coins
+        setRedeemStatus(`Successfully redeemed! You received ${coins} coins.`);
       } else {
         setRedeemStatus(data.message || 'Failed to redeem key');
       }
@@ -167,9 +169,9 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
               <button
                 onClick={handleRedeemKey}
                 disabled={loading}
-                className="ml-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300"
+                className="ml-2 px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300 text-sm"
               >
-                <Key size={18} className="mr-2" />
+                <Key size={16} className="mr-2" />
                 {loading ? 'Redeeming...' : 'Redeem'}
               </button>
             </div>
