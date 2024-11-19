@@ -94,8 +94,6 @@ const handleRedeemKey = async () => {
   } finally {
     setLoading(false);
   }
-};
-
     setRedeemKey('');
   };
 
