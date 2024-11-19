@@ -1,5 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg'; // PostgreSQL client
+const { Pool } = require('pg'); // PostgreSQL client
 
 // Connect to the PostgreSQL database
 const pool = new Pool({
@@ -7,15 +6,8 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Required for cloud hosting environments like Vercel
 });
 
-// Interface for coin payment request
-interface CoinPaymentData {
-  userId: string;
-  planName: string;
-  coinAmount: number;
-}
-
 // Function to get the user's coin balance from the database
-async function getUserCoins(userId: string): Promise<number> {
+async function getUserCoins(userId) {
   const result = await pool.query('SELECT coins FROM users WHERE user_id = $1', [userId]);
   if (result.rows.length === 0) {
     throw new Error('User not found');
@@ -24,7 +16,7 @@ async function getUserCoins(userId: string): Promise<number> {
 }
 
 // Function to deduct coins from the user's account
-async function deductCoins(userId: string, amount: number): Promise<boolean> {
+async function deductCoins(userId, amount) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN'); // Start transaction
@@ -52,14 +44,14 @@ async function deductCoins(userId: string, amount: number): Promise<boolean> {
 }
 
 // Function to update the user's plan
-async function updateUserPlan(userId: string, planName: string): Promise<boolean> {
+async function updateUserPlan(userId, planName) {
   const result = await pool.query('UPDATE users SET plan = $1 WHERE user_id = $2 RETURNING *', [planName, userId]);
   return result.rowCount > 0; // Return true if the update was successful
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
-    const { userId, planName, coinAmount }: CoinPaymentData = req.body;
+    const { userId, planName, coinAmount } = req.body;
 
     try {
       // Get user coin balance
@@ -90,4 +82,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
-}
+};
