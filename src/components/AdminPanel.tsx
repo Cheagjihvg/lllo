@@ -38,17 +38,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onManageUser }) => {
 
   const handleAction = async (action: string) => {
     if (isValidUserId) {
+      let url = '';
+      let method = 'POST';
+      let body = {
+        action,
+        userId: parseInt(userId),
+        planId: selectedPlan,
+        key,
+        expiresAt,
+      };
+
+      // Adjust API endpoints for actions
+      switch (action) {
+        case 'create-key':
+          url = '/api/createkeyandban';
+          break;
+        case 'delete-key':
+          url = '/api/removekeyandban';
+          break;
+        case 'ban-user':
+        case 'unban-user':
+          url = '/api/admin';
+          body = { action, userId: parseInt(userId) };
+          break;
+        default:
+          return;
+      }
+
       try {
-        const response = await fetch('/api/admin', {
-          method: 'POST',
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action,
-            userId: parseInt(userId),
-            planId: selectedPlan,
-            key,
-            expiresAt,
-          }),
+          body: JSON.stringify(body),
         });
 
         const data = await response.json();
@@ -58,6 +79,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onManageUser }) => {
         } else {
           setActionStatus(data.message);
         }
+
+        // After creating/deleting a key, refresh the key list
+        if (action === 'create-key' || action === 'delete-key') {
+          await fetchKeyList();
+        }
+
       } catch (error) {
         console.error('Error:', error);
         setActionStatus('Something went wrong. Please try again later.');
@@ -66,21 +93,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onManageUser }) => {
   };
 
   // Fetch key list from the backend
-  useEffect(() => {
-    const fetchKeyList = async () => {
-      try {
-        const response = await fetch('/api/admin/keys');
-        const data = await response.json();
-        if (response.ok) {
-          setKeys(data);
-        } else {
-          console.error('Failed to fetch keys');
-        }
-      } catch (error) {
-        console.error('Error fetching keys:', error);
+  const fetchKeyList = async () => {
+    try {
+      const response = await fetch('/api/showlistall');
+      const data = await response.json();
+      if (response.ok) {
+        setKeys(data);
+      } else {
+        console.error('Failed to fetch keys');
       }
-    };
+    } catch (error) {
+      console.error('Error fetching keys:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchKeyList();
   }, []);
 
