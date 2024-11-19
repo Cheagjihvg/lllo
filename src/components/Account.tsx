@@ -68,36 +68,33 @@ export const Account: React.FC<AccountProps> = ({ user, setUser }) => {
     }
   };
 
-  const handleRedeemKey = async () => {
-    if (!redeemKey.trim()) {
-      setRedeemStatus('Please enter a valid redeem key.');
-      return;
-    }
+const handleRedeemKey = async () => {
+  setLoading(true);
+  try {
+    const response = await fetch('/api/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redeemKey: redeemKey.trim(), userId: user.id }),
+    });
 
-    setLoading(true);
-    try {
-      const response = await fetch('/api/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ redeemKey: redeemKey.trim(), userId: user.id }),
-      });
+    const text = await response.text();
+    console.log('Raw Response:', text); // Log the raw response to debug
 
-      const data = await response.json();
-      if (response.ok) {
-        // Assuming the redeem API returns the amount of coins redeemed
-        const { coins } = data;  // The response should include the coins awarded
-        setUser({ ...user, plan: 'pro', coins: (user.coins || 0) + coins }); // Update user plan and coins
-        setRedeemStatus(`Successfully redeemed! You received ${coins} coins.`);
-      } else {
-        // API error - show the message returned by the API
-        setRedeemStatus(data.message || 'Failed to redeem key. Please check the key or try again later.');
-      }
-    } catch (error) {
-      console.error('Error redeeming key:', error);
-      setRedeemStatus('Error redeeming the key. Please try again later.');
-    } finally {
-      setLoading(false);
+    const data = JSON.parse(text); // Parse JSON only if it is valid
+    if (response.ok) {
+      const { coins } = data;
+      setUser({ ...user, plan: 'pro', coins: (user.coins || 0) + coins });
+      setRedeemStatus(`Successfully redeemed! You received ${coins} coins.`);
+    } else {
+      setRedeemStatus(data.message || 'Failed to redeem key.');
     }
+  } catch (error) {
+    console.error('Error redeeming key:', error);
+    setRedeemStatus('Error redeeming the key. Please try again later.');
+  } finally {
+    setLoading(false);
+  }
+};
 
     setRedeemKey('');
   };
