@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -8,7 +7,7 @@ const pool = new Pool({
   },
 });
 
-async function handleAdminAction(req: NextApiRequest, res: NextApiResponse) {
+async function handleAdminAction(req, res) {
   const { action, userId, planId, key, expiresAt } = req.body;
 
   // Authorization Check
